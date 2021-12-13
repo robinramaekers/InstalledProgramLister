@@ -27,14 +27,20 @@ Function Get-ApplicationInfo {
     else {
         $Node = "User"
     }
-    $installedProgram = [PSCustomObject]@{
-        KeyName = [io.path]::GetFileName($_.Name)
-        Vendor = $KeyInfo.GetValue("Publisher")
-        Name = $KeyInfo.GetValue("DisplayName")
-        Version = $KeyInfo.GetValue("DisplayVersion")
-        Type = $Type
-        Node = $Node
-        UninstallString = $KeyInfo.GetValue("UninstallString")
+
+    if (($null -eq $KeyInfo.getValue("Publisher")) -and ($null -eq $KeyInfo.getValue("Publisher")) -and ($null -eq $KeyInfo.getValue("Publisher"))) {
+       return $null
+    }
+    else {
+        $installedProgram = [PSCustomObject]@{
+            KeyName = [io.path]::GetFileName($_.Name)
+            Vendor = $KeyInfo.GetValue("Publisher")
+            Name = $KeyInfo.GetValue("DisplayName")
+            Version = $KeyInfo.GetValue("DisplayVersion")
+            Type = $Type
+            Node = $Node
+            UninstallString = $KeyInfo.GetValue("UninstallString")
+        }
     }
 
     return $installedProgram
@@ -43,17 +49,25 @@ Function Get-ApplicationInfo {
 $InstalledPrograms = @()
 Get-childitem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | select-Object -property "Name" | ForEach-Object {
     $installedProgram = Get-ApplicationInfo $_.Name
-    $InstalledPrograms += $installedProgram
+    if ($null -ne $installedProgram) {
+        $InstalledPrograms += $installedProgram
+    }
 }
 
 Get-childitem "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall" | select-Object -property "Name" | ForEach-Object {
     $installedProgram = Get-ApplicationInfo $_.Name
-    $InstalledPrograms += $installedProgram
+    if ($null -ne $installedProgram) {
+        $InstalledPrograms += $installedProgram
+    }
+
 }
 
 Get-childitem "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall" | Select-Object -Property "Name" | ForEach-Object {
     $installedProgram = Get-ApplicationInfo $_.Name
-    $InstalledPrograms += $installedProgram
+    if ($null -ne $installedProgram) {
+        $InstalledPrograms += $installedProgram
+    }
+
 }
 
 $SelectedApplication = $InstalledPrograms | Select-Object -Property "Vendor", "Name", "Version", "Type", "Node", "UninstallString" | Out-GridView -Title "Installed applications" -OutputMode Single
